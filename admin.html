@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soul Tech — Admin Dashboard</title>
+    <style>
+        /* ==========================================================
+           SOUL TECH — ADMIN DASHBOARD (standalone page)
+           Same theme as the public website:
+           #f8f9fa background, white cards with 10px radii,
+           #182848 navy, #f28c28 orange, #4b6cb7 blue,
+           linear-gradient(135deg, #4b6cb7, #f28c28) headers.
+           Data: reads the same localStorage keys as the website
+           (bsm_orders, bsm_services) — must be opened in the same
+           browser as the site (sandbox prototype, no backend yet).
+        ========================================================== */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; }
+
+        body { background-color: #f8f9fa; color: #333; line-height: 1.6; }
+
+        /* ---------- buttons ---------- */
+        .btn {
+            background-color: #f28c28;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover { background-color: #d97812; color: white; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-outline { background: white; color: #f28c28; border: 2px solid #f28c28; }
+        .btn-outline:hover { background: #fdeada; color: #d97812; }
+        .btn-remove { background: #c0392b; }
+        .btn-remove:hover { background: #922b21; }
+        .btn-light { background: white; color: #182848; }
+        .btn-light:hover { background: #fdeada; color: #182848; }
+
+        /* ---------- login screen ---------- */
+        .ad-login-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+        .ad-login-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 2.5rem 2rem;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+        }
+        .ad-login-badge {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4b6cb7, #f28c28);
+            color: white;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+        }
+        .ad-login-card h1 { color: #182848; font-size: 1.8rem; margin-bottom: 0.4rem; }
+        .ad-login-sub { color: #777; margin-bottom: 1.5rem; }
+        .ad-form-group { margin-bottom: 1.2rem; text-align: left; }
+        .ad-form-group label { display: block; font-weight: bold; color: #182848; margin-bottom: 0.4rem; }
+        .ad-form-group input {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        .ad-form-group input.invalid { border-color: #c0392b; }
+        .ad-field-error { color: #c0392b; font-size: 0.85rem; margin-top: 0.3rem; display: none; }
+        .ad-field-error.show { display: block; }
+        .ad-login-hint {
+            margin-top: 1.25rem;
+            font-size: 0.85rem;
+            color: #555;
+            background: #eef2f7;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+        }
+        .ad-login-back { margin-top: 1rem; font-size: 0.9rem; }
+        .ad-login-back a { color: #4b6cb7; text-decoration: none; font-weight: bold; }
+        .ad-login-back a:hover { color: #f28c28; }
+
+        /* ---------- top bar ---------- */
+        .ad-topbar {
+            background: linear-gradient(135deg, #4b6cb7, #f28c28);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            padding: 1.1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .ad-topbar h1 { font-size: 1.5rem; color: white; }
+        .ad-badge {
+            background: rgba(255,255,255,0.25);
+            padding: 0.2rem 0.7rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            vertical-align: middle;
+        }
+        .ad-topbar-sub { font-size: 0.85rem; opacity: 0.9; }
+        .ad-topbar-actions { display: flex; gap: 0.75rem; }
+
+        /* ---------- layout ---------- */
+        .ad-body {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+        .ad-sidebar {
+            width: 230px;
+            flex-shrink: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: sticky;
+            top: 90px;
+        }
+        .ad-nav-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.95rem 1.25rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: inherit;
+            color: #333;
+            border-left: 4px solid transparent;
+            transition: background 0.2s;
+        }
+        .ad-nav-btn:hover { background: #fdeada; }
+        .ad-nav-btn.active { background: #eef2f7; border-left-color: #f28c28; color: #182848; font-weight: bold; }
+        .ad-sidebar-foot { padding: 1rem 1.25rem; border-top: 1px solid #e3e8f0; font-size: 0.75rem; color: #888; }
+        .ad-content { flex: 1; min-width: 0; }
+        .ad-title { color: #182848; font-size: 1.8rem; margin-bottom: 0.4rem; }
+        .ad-desc { color: #777; margin-bottom: 1.5rem; }
+
+        /* ---------- KPI cards ---------- */
+        .ad-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .ad-kpi {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 1.4rem 1.5rem;
+            border-top: 4px solid #f28c28;
+        }
+        .ad-kpi:nth-child(2) { border-top-color: #4b6cb7; }
+        .ad-kpi:nth-child(3) { border-top-color: #1e7e34; }
+        .ad-kpi:nth-child(4) { border-top-color: #182848; }
+        .ad-kpi:nth-child(5) { border-top-color: #d97812; }
+        .ad-kpi:nth-child(6) { border-top-color: #4b6cb7; }
+        .ad-kpi-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #777;
+            font-weight: bold;
+            margin-bottom: 0.4rem;
+        }
+        .ad-kpi-value { font-size: 1.8rem; font-weight: bold; color: #182848; }
+        .ad-kpi-sub { font-size: 0.8rem; color: #888; margin-top: 0.3rem; }
+
+        /* ---------- panels ---------- */
+        .ad-panel {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .ad-panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .ad-panel-head h3 { color: #182848; font-size: 1.2rem; margin: 0; }
+        .ad-grid-2 {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 0;
+        }
+        .ad-grid-2 > .ad-panel { margin-bottom: 2rem; }
+
+        /* ---------- tables ---------- */
+        .ad-table-wrap { overflow-x: auto; }
+        .ad-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .ad-table th {
+            background: #182848;
+            color: white;
+            text-align: left;
+            padding: 0.7rem 0.9rem;
+            white-space: nowrap;
+        }
+        .ad-table td {
+            padding: 0.75rem 0.9rem;
+            border-bottom: 1px solid #e3e8f0;
+            vertical-align: top;
+            color: #333;
+        }
+        .ad-table tbody tr:hover td { background: #f5f8fc; }
+        .ad-table tfoot td { background: #eef2f7; font-weight: bold; color: #182848; }
+        .cell-main { font-weight: bold; color: #182848; }
+        .cell-sub { font-size: 0.8rem; color: #777; }
+
+        /* ---------- status pills & selects ---------- */
+        .pill {
+            display: inline-block;
+            padding: 0.25rem 0.7rem;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .pill-received { background: #e6ecfb; color: #4b6cb7; }
+        .pill-progress { background: #fdeada; color: #d97812; }
+        .pill-completed { background: #e6f6e9; color: #1e7e34; }
+        .pill-cancelled { background: #fdecea; color: #c0392b; }
+        .status-select {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 0.35rem 0.4rem;
+            background: white;
+            font-size: 0.8rem;
+            font-family: inherit;
+            max-width: 150px;
+        }
+        .status-select.sel-received { color: #4b6cb7; }
+        .status-select.sel-progress { color: #d97812; }
+        .status-select.sel-completed { color: #1e7e34; font-weight: bold; }
+        .status-select.sel-cancelled { color: #c0392b; font-weight: bold; }
+
+        /* ---------- toolbar ---------- */
+        .ad-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+        .ad-search {
+            padding: 0.6rem 0.9rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            min-width: 260px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        .ad-select {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: white;
+            font-family: inherit;
+        }
+        .ad-count { color: #777; font-size: 0.85rem; margin-bottom: 0.75rem; }
+        .ad-empty {
+            text-align: center;
+            color: #888;
+            padding: 2.5rem 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .ad-empty strong { display: block; color: #555; margin-bottom: 0.4rem; font-size: 1.05rem; }
+        .ad-note { font-size: 0.8rem; color: #888; margin-top: 1rem; }
+
+        /* ---------- quick actions in orders table ---------- */
+        .row-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .mini-btn {
+            display: inline-block;
+            padding: 0.35rem 0.6rem;
+            border-radius: 5px;
+            font-size: 0.78rem;
+            font-weight: bold;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            line-height: 1.2;
+        }
+        .mini-wa { background: #e6f6e9; color: #1e7e34; }
+        .mini-wa:hover { background: #1e7e34; color: white; }
+        .mini-mail { background: #e6ecfb; color: #4b6cb7; }
+        .mini-mail:hover { background: #4b6cb7; color: white; }
+        .mini-del { background: #fdecea; color: #c0392b; }
+        .mini-del:hover { background: #c0392b; color: white; }
+
+        /* ---------- charts ---------- */
+        .time-chart { display: flex; gap: 0.6rem; align-items: flex-end; height: 180px; padding-top: 0.5rem; }
+        .time-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 0.4rem; }
+        .time-bar {
+            width: 70%;
+            max-width: 60px;
+            background: linear-gradient(180deg, #f28c28, #4b6cb7);
+            border-radius: 6px 6px 0 0;
+            min-height: 3px;
+        }
+        .time-value { font-size: 0.75rem; font-weight: bold; color: #182848; }
+        .time-label { font-size: 0.72rem; color: #777; white-space: nowrap; }
+
+        .hbar-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.65rem; }
+        .hbar-label { width: 180px; flex-shrink: 0; font-size: 0.85rem; color: #555; text-align: right; }
+        .hbar-track { flex: 1; background: #eef2f7; border-radius: 6px; height: 22px; overflow: hidden; }
+        .hbar-fill { height: 100%; background: linear-gradient(90deg, #4b6cb7, #f28c28); border-radius: 6px; }
+        .hbar-value { width: 30px; font-weight: bold; color: #182848; font-size: 0.85rem; }
+
+        .donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+        .donut {
+            width: 170px;
+            height: 170px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .donut-hole {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .donut-hole strong { color: #182848; font-size: 1rem; line-height: 1.3; }
+        .donut-hole span { font-size: 0.7rem; color: #888; }
+        .legend { display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem; color: #555; }
+        .legend-item { display: flex; align-items: center; gap: 0.5rem; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+        .clients-list { list-style: none; }
+        .clients-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.7rem 0;
+            border-bottom: 1px solid #e3e8f0;
+        }
+        .clients-list li:last-child { border-bottom: none; }
+        .client-rank {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4b6cb7, #f28c28);
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .client-info { flex: 1; min-width: 0; }
+        .client-spent { font-weight: bold; color: #182848; white-space: nowrap; }
+
+        /* ---------- services editor ---------- */
+        .svc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+        .svc-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            border-top: 4px solid #4b6cb7;
+        }
+        .svc-card.is-new { border-top-color: #f28c28; }
+        .svc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .svc-head h3 { color: #182848; font-size: 1.1rem; margin: 0; }
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .badge-once-off { background: #e6ecfb; color: #4b6cb7; }
+        .badge-monthly { background: #fdeada; color: #d97812; }
+        .field { margin-bottom: 0.9rem; }
+        .field label { display: block; font-weight: bold; color: #182848; font-size: 0.82rem; margin-bottom: 0.3rem; }
+        .field input, .field select, .field textarea {
+            width: 100%;
+            padding: 0.55rem 0.7rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background: white;
+        }
+        .field textarea { resize: vertical; }
+        .field-row { display: flex; gap: 1rem; }
+        .field-row .field { flex: 1; }
+        .svc-actions { display: flex; gap: 0.75rem; margin-top: 1.1rem; }
+        .svc-add-card {
+            border: 2px dashed #b9c6dd;
+            box-shadow: none;
+            background: #fbfcfe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 160px;
+            cursor: pointer;
+            color: #4b6cb7;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: border-color 0.2s, background 0.2s, color 0.2s;
+        }
+        .svc-add-card:hover { border-color: #f28c28; background: #fdeada; color: #d97812; }
+
+        /* ---------- clients showcase editor ---------- */
+        .badge-featured {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            background: #fff7e0;
+            color: #b7791f;
+        }
+        .ad-socials-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 0.9rem;
+        }
+        .ad-featured-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: bold;
+            color: #182848;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-bottom: 0.2rem;
+        }
+        .ad-featured-label input { width: auto; }
+
+        /* ---------- toast ---------- */
+        .ad-toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: #182848;
+            color: white;
+            padding: 0.9rem 1.4rem;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+            max-width: 320px;
+        }
+        .ad-toast.show { opacity: 1; transform: translateY(0); }
+        .ad-toast.success { background: #1e7e34; }
+        .ad-toast.error { background: #c0392b; }
+
+        /* ---------- responsive ---------- */
+        @media (max-width: 1100px) {
+            .ad-grid-2 { grid-template-columns: 1fr; }
+            .ad-grid-2 > .ad-panel { margin-bottom: 2rem; }
+        }
+        @media (max-width: 900px) {
+            .ad-body { flex-direction: column; }
+            .ad-sidebar { width: 100%; position: static; display: flex; }
+            .ad-nav-btn { border-left: none; border-bottom: 4px solid transparent; text-align: center; padding: 0.8rem 0.5rem; }
+            .ad-nav-btn.active { border-bottom-color: #f28c28; }
+            .ad-sidebar-foot { display: none; }
+            .ad-topbar { padding: 1rem; }
+            .hbar-label { width: 120px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===============================
+         LOGIN (sandbox password)
+    =============================== -->
+    <div id="ad-login" class="ad-login-wrap">
+        <div class="ad-login-card">
+            <div class="ad-login-badge">🛡️</div>
+            <h1>Soul Tech Admin</h1>
+            <p class="ad-login-sub">Community Boost · management dashboard</p>
+            <form onsubmit="return adLogin(event)">
+                <div class="ad-form-group">
+                    <label for="ad-pass">Password</label>
+                    <input type="password" id="ad-pass" placeholder="Enter admin password" autofocus>
+                    <div class="ad-field-error" id="ad-login-error">Incorrect password. Please try again.</div>
+                </div>
+                <button type="submit" class="btn" style="width:100%;">Log In</button>
+            </form>
+            <p class="ad-login-hint">Sandbox demo — default password: <strong>soultech</strong></p>
+            <p class="ad-login-back"><a href="Soul_Tech.html">← Back to website</a></p>
+        </div>
+    </div>
+
+    <!-- ===============================
+         ADMIN APP
+    =============================== -->
+    <div id="ad-app" style="display:none;">
+        <header class="ad-topbar">
+            <div>
+                <h1>Soul Tech <span class="ad-badge">ADMIN</span></h1>
+                <div class="ad-topbar-sub">Community Boost · management dashboard</div>
+            </div>
+            <div class="ad-topbar-actions">
+                <a class="btn btn-light" href="Soul_Tech.html">Open Website</a>
+                <button type="button" class="btn btn-light" onclick="adLogout()">Log Out</button>
+            </div>
+        </header>
+
+        <div class="ad-body">
+            <aside class="ad-sidebar">
+                <button type="button" class="ad-nav-btn active" id="ad-nav-dashboard" onclick="adSwitchTab('dashboard')">📊 Dashboard</button>
+                <button type="button" class="ad-nav-btn" id="ad-nav-orders" onclick="adSwitchTab('orders')">📦 Orders</button>
+                <button type="button" class="ad-nav-btn" id="ad-nav-clients" onclick="adSwitchTab('clients')">🤝 Clients</button>
+                <button type="button" class="ad-nav-btn" id="ad-nav-services" onclick="adSwitchTab('services')">🛠️ Services</button>
+                <div class="ad-sidebar-foot">
+                    <p>Sandbox prototype — data is stored in this browser's localStorage and shared with the website.</p>
+                </div>
+            </aside>
+            <main class="ad-content" id="ad-content"><!-- rendered by JS --></main>
+        </div>
+    </div>
+
+    <div id="ad-toast" class="ad-toast"></div>
+
+    <script>
+        /* ==========================================================
+           SOUL TECH — ADMIN DASHBOARD
+           - Login: sandbox password "soultech" (sessionStorage,
+             shared with the in-file #admin panel).
+           - Data: same localStorage keys as the website:
+             "bsm_orders" (orders) and "bsm_services" (catalog).
+           - Owner contact used for client messages:
+             +27 68 180 0497 / info@communityboost.com
+        ========================================================== */
+
+        var AD_PASSWORD = "soultech";
+        var AD_AUTH_KEY = "st_admin_authed";
+        var AD_ORDERS_KEY = "bsm_orders";
+        var AD_SERVICES_KEY = "bsm_services";
+        var AD_CLIENTS_KEY = "bsm_clients";
+        var AD_STATUSES = ["Order Received", "In Progress", "Completed", "Cancelled"];
+        var AD_OWNER_WHATSAPP = "27681800497";
+        var AD_OWNER_EMAIL = "info@communityboost.com";
+
+        var currentTab = "dashboard";
+        var newService = null;
+        var newClient = null;
+        var ordersFilter = { q: "", status: "All" };
+
+        // Fallback catalog (used when no custom catalog is stored).
+        var defaultServices = [
+            { id: "community-rate", name: "Community Rate (Basic)",  price: 199,  pricingType: "monthly",  description: "1 platform, 4 posts per month and a monthly check-in — built for spaza shops, street traders and co-ops." },
+            { id: "starter",        name: "Community Starter",       price: 299,  pricingType: "monthly",  description: "2 platforms, 8 posts per month, a basic monthly report and 2 free check-ins a month." },
+            { id: "growth",         name: "Growth Package",          price: 999,  pricingType: "monthly",  description: "4 platforms, 16 posts per month, 1 managed ad campaign, advanced analytics and a monthly strategy call." },
+            { id: "premium",        name: "Premium Package",         price: 2499, pricingType: "monthly",  description: "All major platforms, 30+ posts per month, ad campaigns for your products, weekly strategy calls and reputation management." },
+            { id: "web-design",     name: "Website Design",          price: 4999, pricingType: "once-off", description: "A professional, mobile-friendly website designed and built for your business." },
+            { id: "branding",       name: "Branding",                price: 1499, pricingType: "once-off", description: "Logo, colour palette and brand guidelines that give your business a professional identity." },
+            { id: "seo",            name: "SEO",                     price: 1999, pricingType: "monthly",  description: "Ongoing search engine optimisation to help your business rank higher on Google." }
+        ];
+
+        // ---------- data helpers ----------
+        function getOrders() {
+            try {
+                var list = JSON.parse(localStorage.getItem(AD_ORDERS_KEY));
+                return Array.isArray(list) ? list : [];
+            } catch (e) { return []; }
+        }
+        function saveOrders(list) { localStorage.setItem(AD_ORDERS_KEY, JSON.stringify(list)); }
+
+        function getServices() {
+            try {
+                var saved = JSON.parse(localStorage.getItem(AD_SERVICES_KEY));
+                // Same outdated-catalog guard as the website:
+                // pre-community-pricing catalogs are replaced by the
+                // new defaults (re-add any customised services after).
+                if (Array.isArray(saved) && saved.length > 0 && saved.some(function (s) { return s.id === "community-rate"; })) return saved;
+            } catch (e) { /* fall through */ }
+            return JSON.parse(JSON.stringify(defaultServices));
+        }
+        function saveServices(services) {
+            localStorage.setItem(AD_SERVICES_KEY, JSON.stringify(services));
+        }
+
+        function getClients() {
+            try {
+                var saved = JSON.parse(localStorage.getItem(AD_CLIENTS_KEY));
+                return Array.isArray(saved) ? saved : [];
+            } catch (e) { return []; }
+        }
+        function saveClients(clients) {
+            localStorage.setItem(AD_CLIENTS_KEY, JSON.stringify(clients));
+        }
+
+        function money(amount) {
+            return "R" + Number(amount || 0).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function esc(value) {
+            return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
+                return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+            });
+        }
+
+        function statusClass(status) {
+            switch (status) {
+                case "In Progress": return "pill-progress";
+                case "Completed": return "pill-completed";
+                case "Cancelled": return "pill-cancelled";
+                default: return "pill-received";
+            }
+        }
+
+        function toast(message, type) {
+            var t = document.getElementById("ad-toast");
+            if (!t) return;
+            t.textContent = message;
+            t.className = "ad-toast show " + (type === "error" ? "error" : "success");
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(function () { t.className = "ad-toast"; }, 2600);
+        }
+
+        // Day bucket key for the time chart (ts first, then the
+        // formatted date string, then the raw string as fallback).
+        function orderDayKey(o) {
+            var d = o.ts ? new Date(o.ts) : new Date(o.date);
+            if (!isNaN(d.getTime())) return d.toDateString();
+            return String(o.date || "Unknown date");
+        }
+        function dayLabel(key) {
+            var d = new Date(key);
+            if (isNaN(d.getTime())) return esc(key);
+            return esc(d.toLocaleDateString("en-ZA", { day: "numeric", month: "short" }));
+        }
+
+        // ---------- contact links ----------
+        function phoneToWhatsApp(phone) {
+            var digits = String(phone || "").replace(/\D/g, "");
+            if (digits.indexOf("0") === 0) digits = "27" + digits.slice(1);
+            if (digits.indexOf("27") !== 0) digits = "27" + digits;
+            return digits;
+        }
+        function clientWhatsAppUrl(phone) {
+            return "https://wa.me/" + phoneToWhatsApp(phone) +
+                "?text=" + encodeURIComponent("Hi! This is Soul Tech (Community Boost) regarding your package order.");
+        }
+        function clientEmailUrl(email) {
+            return "mailto:" + email + "?subject=" + encodeURIComponent("Your Soul Tech package order");
+        }
+
+        // ---------- login / logout ----------
+        function adLogin(event) {
+            event.preventDefault();
+            var passInput = document.getElementById("ad-pass");
+            var err = document.getElementById("ad-login-error");
+            if (passInput.value === AD_PASSWORD) {
+                try { sessionStorage.setItem(AD_AUTH_KEY, "1"); } catch (e) { }
+                err.classList.remove("show");
+                passInput.value = "";
+                showApp();
+            } else {
+                err.classList.add("show");
+                passInput.value = "";
+                passInput.classList.add("invalid");
+                passInput.focus();
+            }
+            return false;
+        }
+        function adLogout() {
+            try { sessionStorage.removeItem(AD_AUTH_KEY); } catch (e) { }
+            document.getElementById("ad-app").style.display = "none";
+            document.getElementById("ad-login").style.display = "flex";
+        }
+        function showApp() {
+            document.getElementById("ad-login").style.display = "none";
+            document.getElementById("ad-app").style.display = "block";
+            adRenderTab();
+        }
+
+        // ---------- tab rendering ----------
+        function adSwitchTab(tab) {
+            currentTab = tab;
+            adRenderTab();
+        }
+        function adRenderTab() {
+            ["dashboard", "orders", "clients", "services"].forEach(function (t) {
+                var btn = document.getElementById("ad-nav-" + t);
+                if (btn) btn.classList.toggle("active", t === currentTab);
+            });
+            var content = document.getElementById("ad-content");
+            if (!content) return;
+            if (currentTab === "dashboard") content.innerHTML = buildDashboardHtml();
+            else if (currentTab === "orders") content.innerHTML = buildOrdersHtml();
+            else if (currentTab === "clients") content.innerHTML = buildClientsHtml();
+            else content.innerHTML = buildServicesHtml();
+        }
+
+        // ---------- DASHBOARD ----------
+        function buildDashboardHtml() {
+            var orders = getOrders();
+            var services = getServices();
+            var showcaseCount = getClients().length;
+
+            // KPIs (cancelled orders excluded from revenue)
+            var onceOff = 0, monthly = 0, active = 0;
+            orders.forEach(function (o) {
+                if (o.status !== "Cancelled") {
+                    active++;
+                    onceOff += o.onceOffTotal || 0;
+                    monthly += o.monthlyTotal || 0;
+                }
+            });
+            var avgOrder = active ? Math.round((onceOff + monthly) / active) : 0;
+
+            // Unique clients
+            var clientSet = {};
+            orders.forEach(function (o) {
+                if (o.email) clientSet[String(o.email).toLowerCase()] = true;
+            });
+            var clientCount = Object.keys(clientSet).length;
+
+            // Orders over time (last 7 day-buckets)
+            var buckets = {};
+            orders.forEach(function (o) {
+                var k = orderDayKey(o);
+                buckets[k] = (buckets[k] || 0) + 1;
+            });
+            var keys = Object.keys(buckets).sort(function (a, b) {
+                var da = new Date(a), db = new Date(b);
+                if (isNaN(da.getTime()) || isNaN(db.getTime())) return a < b ? -1 : 1;
+                return da - db;
+            });
+            keys = keys.slice(-7);
+            var maxBucket = 1;
+            keys.forEach(function (k) { if (buckets[k] > maxBucket) maxBucket = buckets[k]; });
+
+            var timeHtml;
+            if (orders.length === 0) {
+                timeHtml = '<div class="ad-empty"><strong>No orders yet</strong>Place an order in "Build Your Package" on the website and it will show up here.</div>';
+            } else {
+                timeHtml = '<div class="time-chart">' + keys.map(function (k) {
+                    var pct = Math.max(Math.round((buckets[k] / maxBucket) * 100), 4);
+                    return '<div class="time-col">' +
+                        '<div class="time-value">' + buckets[k] + '</div>' +
+                        '<div class="time-bar" style="height:' + pct + '%;"></div>' +
+                        '<div class="time-label">' + dayLabel(k) + '</div>' +
+                    '</div>';
+                }).join("") + '</div>';
+            }
+
+            // Revenue split donut (once-off vs monthly)
+            var totalRev = onceOff + monthly;
+            var pctOnceOff = totalRev ? Math.round((onceOff / totalRev) * 100) : 0;
+            var donutHtml;
+            if (totalRev === 0) {
+                donutHtml = '<div class="donut-wrap"><div class="ad-empty" style="width:100%;"><strong>No revenue yet</strong>It will appear here once orders are placed.</div></div>';
+            } else {
+                donutHtml =
+                    '<div class="donut-wrap">' +
+                    '<div class="donut" style="background: conic-gradient(#f28c28 0 ' + pctOnceOff + '%, #4b6cb7 ' + pctOnceOff + '% 100%);">' +
+                    '<div class="donut-hole"><strong>' + money(totalRev) + '</strong><span>total revenue</span></div>' +
+                    '</div>' +
+                    '<div class="legend">' +
+                    '<div class="legend-item"><span class="legend-dot" style="background:#f28c28;"></span>Once-off — ' + money(onceOff) + ' (' + pctOnceOff + '%)</div>' +
+                    '<div class="legend-item"><span class="legend-dot" style="background:#4b6cb7;"></span>Monthly — ' + money(monthly) + '/mo (' + (100 - pctOnceOff) + '%)</div>' +
+                    '</div>' +
+                    '</div>';
+            }
+
+            // Orders by service
+            var counts = {};
+            orders.forEach(function (o) {
+                (o.serviceIds || []).forEach(function (id) { counts[id] = (counts[id] || 0) + 1; });
+            });
+            var svcRows = services.map(function (s) {
+                return { id: s.id, name: s.name, count: counts[s.id] || 0 };
+            }).sort(function (a, b) { return b.count - a.count; });
+            var maxSvc = 1;
+            svcRows.forEach(function (r) { if (r.count > maxSvc) maxSvc = r.count; });
+            var svcHtml = (orders.length === 0)
+                ? '<div class="ad-empty"><strong>No orders yet</strong>Service usage will be charted here.</div>'
+                : svcRows.map(function (r) {
+                    var pct = Math.max(Math.round((r.count / maxSvc) * 100), 4);
+                    return '<div class="hbar-row">' +
+                        '<div class="hbar-label">' + esc(r.name) + '</div>' +
+                        '<div class="hbar-track"><div class="hbar-fill" style="width:' + pct + '%;"></div></div>' +
+                        '<div class="hbar-value">' + r.count + '</div>' +
+                    '</div>';
+                }).join("");
+
+            // Top clients (by total spend: once-off + monthly)
+            var clients = {};
+            orders.forEach(function (o) {
+                var k = (o.email || "unknown").toLowerCase();
+                if (!clients[k]) clients[k] = { email: o.email, name: o.fullName, business: o.businessName, orders: 0, spent: 0 };
+                clients[k].orders++;
+                clients[k].spent += (o.onceOffTotal || 0) + (o.monthlyTotal || 0);
+            });
+            var topClients = Object.keys(clients).map(function (k) { return clients[k]; })
+                .sort(function (a, b) { return b.spent - a.spent; })
+                .slice(0, 5);
+            var clientsHtml = (topClients.length === 0)
+                ? '<div class="ad-empty"><strong>No clients yet</strong>Your busiest clients will appear here.</div>'
+                : '<ul class="clients-list">' + topClients.map(function (c, i) {
+                    return '<li>' +
+                        '<span class="client-rank">' + (i + 1) + '</span>' +
+                        '<span class="client-info"><span class="cell-main">' + esc(c.business || c.name) + '</span><br>' +
+                        '<span class="cell-sub">' + esc(c.name) + ' · ' + c.orders + ' order' + (c.orders === 1 ? '' : 's') + '</span></span>' +
+                        '<span class="client-spent">' + money(c.spent) + '</span>' +
+                    '</li>';
+                }).join("") + '</ul>';
+
+            // Recent orders
+            var recent = orders.slice(0, 5);
+            var recentHtml;
+            if (recent.length === 0) {
+                recentHtml = '<div class="ad-empty"><strong>No orders yet</strong>New orders from the website checkout appear here automatically.</div>';
+            } else {
+                recentHtml =
+                    '<div class="ad-table-wrap"><table class="ad-table"><thead><tr>' +
+                    '<th>Order</th><th>Client</th><th>Once-off</th><th>Monthly</th><th>Date</th><th>Status</th>' +
+                    '</tr></thead><tbody>' +
+                    recent.map(function (o) {
+                        return '<tr>' +
+                            '<td><span class="cell-main">' + esc(o.orderNumber) + '</span></td>' +
+                            '<td><span class="cell-main">' + esc(o.businessName) + '</span><div class="cell-sub">' + esc(o.fullName) + '</div></td>' +
+                            '<td>' + money(o.onceOffTotal) + '</td>' +
+                            '<td>' + money(o.monthlyTotal) + ' <span class="cell-sub">/mo</span></td>' +
+                            '<td><span class="cell-sub">' + esc(o.date) + '</span></td>' +
+                            '<td><span class="pill ' + statusClass(o.status) + '">' + esc(o.status) + '</span></td>' +
+                        '</tr>';
+                    }).join("") +
+                    '</tbody></table></div>';
+            }
+
+            return '<h2 class="ad-title">Dashboard</h2>' +
+                '<p class="ad-desc">Overview of the Community Boost store — orders, revenue and clients.</p>' +
+                '<div class="ad-kpi-grid">' +
+                '<div class="ad-kpi"><div class="ad-kpi-label">Total Orders</div><div class="ad-kpi-value">' + orders.length + '</div><div class="ad-kpi-sub">' + active + ' active · ' + (orders.length - active) + ' cancelled</div></div>' +
+                '<div class="ad-kpi"><div class="ad-kpi-label">Once-off Revenue</div><div class="ad-kpi-value">' + money(onceOff) + '</div><div class="ad-kpi-sub">from active orders</div></div>' +
+                '<div class="ad-kpi"><div class="ad-kpi-label">Monthly Revenue</div><div class="ad-kpi-value">' + money(monthly) + '</div><div class="ad-kpi-sub">per month, from active orders</div></div>' +
+                '<div class="ad-kpi"><div class="ad-kpi-label">Avg. Order Value</div><div class="ad-kpi-value">' + money(avgOrder) + '</div><div class="ad-kpi-sub">once-off + monthly, per active order</div></div>' +
+                '<div class="ad-kpi"><div class="ad-kpi-label">Total Clients</div><div class="ad-kpi-value">' + clientCount + '</div><div class="ad-kpi-sub">unique email addresses</div></div>' +
+                '<div class="ad-kpi"><div class="ad-kpi-label">Services</div><div class="ad-kpi-value">' + services.length + '</div><div class="ad-kpi-sub">in the package builder</div></div>' +
+                '<div class="ad-kpi"><div class="ad-kpi-label">Showcase</div><div class="ad-kpi-value">' + showcaseCount + '</div><div class="ad-kpi-sub">clients in "Businesses We Boost"</div></div>' +
+                '</div>' +
+                '<div class="ad-grid-2">' +
+                '<div class="ad-panel"><div class="ad-panel-head"><h3>Orders — Last 7 Days</h3></div>' + timeHtml + '</div>' +
+                '<div class="ad-panel"><div class="ad-panel-head"><h3>Revenue Split</h3></div>' + donutHtml + '</div>' +
+                '</div>' +
+                '<div class="ad-grid-2">' +
+                '<div class="ad-panel"><div class="ad-panel-head"><h3>Orders by Service</h3></div>' + svcHtml + '</div>' +
+                '<div class="ad-panel"><div class="ad-panel-head"><h3>Top Clients</h3></div>' + clientsHtml + '</div>' +
+                '</div>' +
+                '<div class="ad-panel"><div class="ad-panel-head"><h3>Recent Orders</h3>' +
+                '<button type="button" class="btn btn-outline" style="padding:0.45rem 1rem;font-size:0.85rem;" onclick="adSwitchTab(\'orders\')">View All Orders</button>' +
+                '</div>' + recentHtml + '</div>';
+        }
+
+        // ---------- ORDERS ----------
+        function buildOrdersHtml() {
+            var orders = getOrders();
+            var statusOptions = ["All"].concat(AD_STATUSES).map(function (s) {
+                return '<option value="' + esc(s) + '"' + (ordersFilter.status === s ? " selected" : "") + ">" + esc(s) + "</option>";
+            }).join("");
+
+            var toolbar =
+                '<div class="ad-toolbar">' +
+                '<input type="search" class="ad-search" placeholder="Search order #, client, business, email…" value="' + esc(ordersFilter.q) + '" oninput="ordersFilter.q = this.value; adRenderOrdersOnly();">' +
+                '<select class="ad-select" onchange="ordersFilter.status = this.value; adRenderOrdersOnly();">' + statusOptions + '</select>' +
+                (orders.length > 0
+                    ? '<button type="button" class="btn btn-remove" style="padding:0.55rem 1rem;font-size:0.85rem;" onclick="adClearAllOrders()">Clear All Orders</button>'
+                    : "") +
+                '</div>';
+
+            return '<h2 class="ad-title">Orders</h2>' +
+                '<p class="ad-desc">Every order placed through the website checkout — with one-tap contact for each client.</p>' +
+                toolbar +
+                '<div id="ad-orders-rows">' + buildOrdersRows() + '</div>';
+        }
+
+        function buildOrdersRows() {
+            var orders = getOrders();
+            var q = ordersFilter.q.toLowerCase();
+            var filtered = orders.filter(function (o) {
+                var hay = [o.orderNumber, o.fullName, o.businessName, o.email, o.phone, (o.services || []).join(" ")].join(" ").toLowerCase();
+                return (!q || hay.indexOf(q) !== -1) && (ordersFilter.status === "All" || o.status === ordersFilter.status);
+            });
+
+            var tOnce = 0, tMonthly = 0;
+            filtered.forEach(function (o) {
+                tOnce += o.onceOffTotal || 0;
+                tMonthly += o.monthlyTotal || 0;
+            });
+
+            var html = '<p class="ad-count">Showing ' + filtered.length + ' of ' + orders.length + ' order' + (orders.length === 1 ? "" : "s") + '</p>';
+
+            if (filtered.length === 0) {
+                html += '<div class="ad-empty"><strong>' + (orders.length === 0 ? "No orders yet" : "No orders match your filters") + '</strong>' +
+                    (orders.length === 0
+                        ? 'Place an order in "Build Your Package" on the website and it will show up here.'
+                        : "Try a different search term or status.") + '</div>';
+            } else {
+                html += '<div class="ad-table-wrap"><table class="ad-table"><thead><tr>' +
+                    '<th>Order</th><th>Client</th><th>Contact</th><th>Services</th><th>Once-off</th><th>Monthly</th><th>Date</th><th>Status</th><th>Actions</th>' +
+                    '</tr></thead><tbody>' +
+                    filtered.map(function (o) {
+                        var options = AD_STATUSES.map(function (s) {
+                            return '<option value="' + esc(s) + '"' + (o.status === s ? " selected" : "") + '>' + esc(s) + '</option>';
+                        }).join("");
+                        return '<tr>' +
+                            '<td><span class="cell-main">' + esc(o.orderNumber) + '</span></td>' +
+                            '<td><span class="cell-main">' + esc(o.businessName) + '</span><div class="cell-sub">' + esc(o.fullName) + '</div></td>' +
+                            '<td><div class="cell-sub">' + esc(o.email) + '</div><div class="cell-sub">' + esc(o.phone) + '</div></td>' +
+                            '<td>' + (o.services || []).map(esc).join('<br>') + '</td>' +
+                            '<td>' + money(o.onceOffTotal) + '</td>' +
+                            '<td>' + money(o.monthlyTotal) + ' <span class="cell-sub">/mo</span></td>' +
+                            '<td><span class="cell-sub">' + esc(o.date) + '</span></td>' +
+                            '<td><select class="status-select ' + statusClass(o.status) + '" onchange="adUpdateStatus(\'' + esc(o.orderNumber) + '\', this.value)">' + options + '</select></td>' +
+                            '<td><div class="row-actions">' +
+                            (o.phone ? '<a class="mini-btn mini-wa" target="_blank" rel="noopener" href="' + clientWhatsAppUrl(o.phone) + '" title="WhatsApp ' + esc(o.fullName) + '">💬 WA</a>' : '') +
+                            (o.email ? '<a class="mini-btn mini-mail" href="' + clientEmailUrl(o.email) + '" title="Email ' + esc(o.fullName) + '">✉️ Email</a>' : '') +
+                            '<button type="button" class="mini-btn mini-del" onclick="adDeleteOrder(\'' + esc(o.orderNumber) + '\')">Delete</button>' +
+                            '</div></td>' +
+                            '</tr>';
+                    }).join("") +
+                    '</tbody><tfoot><tr>' +
+                    '<td colspan="4">Totals (' + filtered.length + ' order' + (filtered.length === 1 ? "" : "s") + ' shown)</td>' +
+                    '<td>' + money(tOnce) + '</td>' +
+                    '<td>' + money(tMonthly) + ' /mo</td>' +
+                    '<td colspan="3"></td>' +
+                    '</tr></tfoot></table></div>';
+            }
+
+            html += '<p class="ad-note">Sandbox prototype: no backend yet — orders are stored in this browser\'s localStorage, so the dashboard and the website must be opened in the same browser to share orders.</p>';
+            return html;
+        }
+
+        function adRenderOrdersOnly() {
+            var wrap = document.getElementById("ad-orders-rows");
+            if (wrap) wrap.innerHTML = buildOrdersRows();
+        }
+
+        function adUpdateStatus(orderNumber, status) {
+            var orders = getOrders();
+            for (var i = 0; i < orders.length; i++) {
+                if (orders[i].orderNumber === orderNumber) {
+                    orders[i].status = status;
+                    saveOrders(orders);
+                    toast("Order " + orderNumber + " marked as " + status + ".");
+                    break;
+                }
+            }
+            adRenderTab();
+        }
+
+        function adDeleteOrder(orderNumber) {
+            if (!confirm("Delete order " + orderNumber + "? This cannot be undone.")) return;
+            saveOrders(getOrders().filter(function (o) { return o.orderNumber !== orderNumber; }));
+            toast("Order " + orderNumber + " deleted.");
+            adRenderTab();
+        }
+
+        function adClearAllOrders() {
+            if (!confirm("Delete ALL orders? This cannot be undone.")) return;
+            saveOrders([]);
+            toast("All orders cleared.");
+            adRenderTab();
+        }
+
+        // ---------- SERVICES ----------
+        function buildServicesHtml() {
+            var services = getServices();
+            var cardsHtml = services.map(function (s) { return serviceCardHtml(s, false); }).join("");
+            if (newService) cardsHtml += serviceCardHtml(newService, true);
+
+            return '<h2 class="ad-title">Services</h2>' +
+                '<p class="ad-desc">These services power the public "Build Your Package" section. Changes save instantly and appear on the website.</p>' +
+                '<div class="ad-toolbar">' +
+                '<span class="cell-sub">' + services.length + ' service' + (services.length === 1 ? "" : "s") + ' in the catalog</span>' +
+                '<span style="display:flex;gap:0.75rem;flex-wrap:wrap;">' +
+                '<button type="button" class="btn btn-outline" onclick="adResetServices()">Reset to Defaults</button>' +
+                '<button type="button" class="btn" onclick="adAddService()">+ Add Service</button>' +
+                '</span>' +
+                '</div>' +
+                '<div class="svc-grid">' + cardsHtml +
+                '<div class="svc-card svc-add-card" onclick="adAddService()">+ Add New Service</div>' +
+                '</div>' +
+                '<p class="ad-note">Pricing rules: 2 services = 5% discount, 3+ services = 10% discount (applied automatically at checkout).</p>';
+        }
+
+        function serviceCardHtml(s, isNew) {
+            var id = esc(s.id);
+            var badgeClass = s.pricingType === "once-off" ? "badge-once-off" : "badge-monthly";
+            var badgeLabel = s.pricingType === "once-off" ? "Once-off" : "Monthly";
+            return '<div class="svc-card' + (isNew ? " is-new" : "") + '">' +
+                '<div class="svc-head">' +
+                '<h3>' + (isNew ? "New Service" : esc(s.name)) + '</h3>' +
+                (isNew ? "" : '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span>') +
+                '</div>' +
+                '<div class="field"><label>Service name</label><input type="text" id="adSvc-name-' + id + '" value="' + esc(s.name) + '" placeholder="e.g. Video Production"></div>' +
+                '<div class="field-row">' +
+                '<div class="field"><label>Price (R)</label><input type="number" min="0" step="0.01" id="adSvc-price-' + id + '" value="' + esc(s.price) + '"></div>' +
+                '<div class="field"><label>Pricing type</label><select id="adSvc-type-' + id + '">' +
+                '<option value="once-off"' + (s.pricingType === "once-off" ? " selected" : "") + '>Once-off</option>' +
+                '<option value="monthly"' + (s.pricingType === "monthly" ? " selected" : "") + '>Monthly</option>' +
+                '</select></div>' +
+                '</div>' +
+                '<div class="field"><label>Description</label><textarea id="adSvc-desc-' + id + '" rows="3" placeholder="Short description shown on the service card">' + esc(s.description) + '</textarea></div>' +
+                '<div class="svc-actions">' +
+                '<button type="button" class="btn" onclick="adSaveServiceCard(\'' + id + '\')">Save</button>' +
+                (isNew
+                    ? '<button type="button" class="btn btn-outline" onclick="adCancelNewService()">Cancel</button>'
+                    : '<button type="button" class="btn btn-remove" onclick="adDeleteService(\'' + id + '\')">Delete</button>') +
+                '</div>' +
+                '</div>';
+        }
+
+        function adAddService() {
+            newService = { id: "svc-" + Date.now().toString(36), name: "", price: "", pricingType: "monthly", description: "" };
+            adRenderTab();
+            var firstInput = document.getElementById("adSvc-name-" + newService.id);
+            if (firstInput) firstInput.focus();
+        }
+
+        function adCancelNewService() {
+            newService = null;
+            adRenderTab();
+        }
+
+        function adSaveServiceCard(id) {
+            var nameEl = document.getElementById("adSvc-name-" + id);
+            var priceEl = document.getElementById("adSvc-price-" + id);
+            var typeEl = document.getElementById("adSvc-type-" + id);
+            var descEl = document.getElementById("adSvc-desc-" + id);
+            if (!nameEl || !priceEl || !typeEl || !descEl) return;
+
+            var name = nameEl.value.trim();
+            var price = parseFloat(priceEl.value);
+            var type = typeEl.value;
+            var desc = descEl.value.trim();
+
+            if (name.length === 0) { toast("Please enter a service name.", "error"); nameEl.focus(); return; }
+            if (isNaN(price) || price < 0) { toast("Please enter a valid price (R).", "error"); priceEl.focus(); return; }
+
+            var services = getServices();
+            var idx = -1;
+            for (var i = 0; i < services.length; i++) {
+                if (services[i].id === id) { idx = i; break; }
+            }
+
+            if (newService && newService.id === id) {
+                services.push({ id: id, name: name, price: price, pricingType: type, description: desc });
+                newService = null;
+            } else if (idx !== -1) {
+                services[idx] = { id: id, name: name, price: price, pricingType: type, description: desc };
+            } else {
+                toast("Could not find that service.", "error");
+                return;
+            }
+
+            saveServices(services);
+            toast("Service saved — updated on the website.");
+            adRenderTab();
+        }
+
+        function adDeleteService(id) {
+            var services = getServices();
+            var target = null;
+            for (var i = 0; i < services.length; i++) {
+                if (services[i].id === id) { target = services[i]; break; }
+            }
+            if (!target) return;
+            if (!confirm('Remove "' + target.name + '" from the package builder?')) return;
+            saveServices(services.filter(function (s) { return s.id !== id; }));
+            toast("Service removed.");
+            adRenderTab();
+        }
+
+        function adResetServices() {
+            if (!confirm("Restore the original default services? This overwrites your custom catalog.")) return;
+            newService = null;
+            saveServices(JSON.parse(JSON.stringify(defaultServices)));
+            toast("Default services restored.");
+            adRenderTab();
+        }
+
+        // ---------- CLIENTS (Businesses We Boost showcase) ----------
+        function buildClientsHtml() {
+            var clients = getClients();
+            var cardsHtml = clients.map(function (c) {
+                return clientCardHtml(c, false);
+            }).join("");
+            if (newClient) cardsHtml += clientCardHtml(newClient, true);
+
+            return '<h2 class="ad-title">Clients</h2>' +
+                '<p class="ad-desc">Manage the "Businesses We Boost" showcase on the website. Clients who place orders are added automatically — add their social profiles and details here to promote them.</p>' +
+                '<div class="ad-toolbar">' +
+                '<span class="ad-toolbar-note">' + clients.length + ' client' + (clients.length === 1 ? "" : "s") + ' in the showcase</span>' +
+                '<button type="button" class="btn" onclick="adAddClient()">+ Add Client</button>' +
+                '</div>' +
+                (clients.length === 0 && !newClient
+                    ? '<div class="ad-empty" style="width:100%;"><strong>No clients yet</strong>Clients appear here automatically after they place an order on the website — or add one manually.</div>'
+                    : "") +
+                '<div class="svc-grid">' + cardsHtml +
+                '<div class="svc-card svc-add-card" onclick="adAddClient()">+ Add New Client</div>' +
+                '</div>' +
+                '<p class="ad-toolbar-note" style="margin-top:0.9rem;">Tip: featured clients (⭐) appear first on the website. Client social links open in a new tab, and the share buttons promote their business on Facebook, WhatsApp and X.</p>';
+        }
+
+        function clientCardHtml(c, isNew) {
+            var id = esc(c.id);
+            var socials = c.socials || {};
+            var socialFields = [
+                ["facebook", "Facebook URL"],
+                ["instagram", "Instagram URL"],
+                ["whatsapp", "WhatsApp (link or number)"],
+                ["tiktok", "TikTok URL"],
+                ["linkedin", "LinkedIn URL"],
+                ["youtube", "YouTube URL"],
+                ["x", "X / Twitter URL"]
+            ].map(function (p) {
+                return '<div class="field"><label>' + p[1] + '</label><input type="text" id="adCli-' + p[0] + '-' + id + '" value="' + esc(socials[p[0]] || "") + '" placeholder="https://..."></div>';
+            }).join("");
+
+            return '<div class="svc-card' + (isNew ? " is-new" : "") + '">' +
+                '<div class="svc-head">' +
+                '<h3>' + (isNew ? "New Client" : esc(c.name)) + '</h3>' +
+                (c.featured ? '<span class="badge-featured">⭐ Featured</span>' : "") +
+                '</div>' +
+                '<div class="field-row">' +
+                '<div class="field"><label>Business name *</label><input type="text" id="adCli-name-' + id + '" value="' + esc(c.name) + '"></div>' +
+                '<div class="field"><label>Contact person</label><input type="text" id="adCli-contact-' + id + '" value="' + esc(c.contact || "") + '"></div>' +
+                '</div>' +
+                '<div class="field-row">' +
+                '<div class="field"><label>Industry</label><input type="text" id="adCli-industry-' + id + '" value="' + esc(c.industry || "") + '" placeholder="e.g. Catering"></div>' +
+                '<div class="field"><label>Location</label><input type="text" id="adCli-location-' + id + '" value="' + esc(c.location || "") + '" placeholder="e.g. Pretoria"></div>' +
+                '</div>' +
+                '<div class="field"><label>Result / highlight</label><input type="text" id="adCli-result-' + id + '" value="' + esc(c.result || "") + '" placeholder="e.g. +40% foot traffic in 3 months"></div>' +
+                '<div class="field"><label>Logo image URL (optional)</label><input type="text" id="adCli-logo-' + id + '" value="' + esc(c.logoUrl || "") + '" placeholder="https://.../logo.png"></div>' +
+                '<label class="ad-featured-label"><input type="checkbox" id="adCli-featured-' + id + '"' + (c.featured ? " checked" : "") + '> Feature this client (shows first, with a ⭐ badge)</label>' +
+                '<div class="field" style="margin-top:0.9rem;"><label>Client social profiles</label><div class="ad-socials-grid">' + socialFields + '</div></div>' +
+                '<div class="svc-actions">' +
+                '<button type="button" class="btn" onclick="adSaveClientCard(\'' + id + '\')">Save Client</button>' +
+                (isNew
+                    ? '<button type="button" class="btn btn-outline" onclick="adCancelNewClient()">Cancel</button>'
+                    : '<button type="button" class="btn btn-remove" onclick="adDeleteClient(\'' + id + '\')">Delete</button>') +
+                '</div>' +
+                '</div>';
+        }
+
+        function adAddClient() {
+            newClient = {
+                id: "cli-" + Date.now().toString(36),
+                name: "", contact: "", industry: "", location: "", result: "", logoUrl: "",
+                socials: { facebook: "", instagram: "", whatsapp: "", tiktok: "", linkedin: "", youtube: "", x: "" },
+                featured: false
+            };
+            adRenderTab();
+            var firstInput = document.getElementById("adCli-name-" + newClient.id);
+            if (firstInput) firstInput.focus();
+        }
+
+        function adCancelNewClient() {
+            newClient = null;
+            adRenderTab();
+        }
+
+        function adSaveClientCard(id) {
+            var read = function (prefix) {
+                var el = document.getElementById(prefix + id);
+                return el ? el.value.trim() : "";
+            };
+            var name = read("adCli-name-");
+            if (!name) { toast("Please enter the business name.", "error"); var n = document.getElementById("adCli-name-" + id); if (n) n.focus(); return; }
+
+            var client = {
+                id: id,
+                name: name,
+                contact: read("adCli-contact-"),
+                industry: read("adCli-industry-"),
+                location: read("adCli-location-"),
+                result: read("adCli-result-"),
+                logoUrl: read("adCli-logo-"),
+                socials: {},
+                featured: false
+            };
+            var featuredEl = document.getElementById("adCli-featured-" + id);
+            if (featuredEl) client.featured = featuredEl.checked;
+
+            ["facebook", "instagram", "whatsapp", "tiktok", "linkedin", "youtube", "x"].forEach(function (k) {
+                var v = read("adCli-" + k + "-");
+                if (v && !/^https?:\/\//i.test(v)) {
+                    // Plain text: WhatsApp values are treated as phone
+                    // numbers (converted to a wa.me link), everything
+                    // else gets https:// prepended.
+                    var digits = v.replace(/\D/g, "");
+                    if (k === "whatsapp" && digits.length >= 9) {
+                        if (digits.indexOf("0") === 0) digits = "27" + digits.slice(1);
+                        v = "https://wa.me/" + digits;
+                    } else {
+                        v = "https://" + v;
+                    }
+                }
+                client.socials[k] = v;
+            });
+
+            var clients = getClients();
+            var idx = -1;
+            for (var i = 0; i < clients.length; i++) {
+                if (clients[i].id === id) { idx = i; break; }
+            }
+
+            if (newClient && newClient.id === id) {
+                clients.unshift(client);
+                newClient = null;
+            } else if (idx !== -1) {
+                // Keep the contact email/phone captured at checkout.
+                client.email = clients[idx].email;
+                client.phone = clients[idx].phone;
+                clients[idx] = client;
+            } else {
+                toast("Could not find that client.", "error");
+                return;
+            }
+
+            saveClients(clients);
+            toast("Client saved — visible on the website.");
+            adRenderTab();
+        }
+
+        function adDeleteClient(id) {
+            var clients = getClients();
+            var target = null;
+            for (var i = 0; i < clients.length; i++) {
+                if (clients[i].id === id) { target = clients[i]; break; }
+            }
+            if (!target) return;
+            if (!confirm('Remove "' + target.name + '" from the showcase?')) return;
+            saveClients(clients.filter(function (c) { return c.id !== id; }));
+            toast("Client removed from the showcase.");
+            adRenderTab();
+        }
+
+        // ---------- initialise ----------
+        document.addEventListener("DOMContentLoaded", function () {
+            var authed = false;
+            try { authed = !!sessionStorage.getItem(AD_AUTH_KEY); } catch (e) { }
+            if (authed) showApp();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a4d18b427e301380',t:'MTc5MjQzMTM3NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
