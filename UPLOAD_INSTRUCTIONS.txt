@@ -1,0 +1,25 @@
+SOUL TECH - FRESH WEBSITE (GITHUB PAGES)
+=========================================
+Brand-new single-file website. No team section.
+Checkout pays to the Gotyme account (51066151314).
+
+FILES (upload ALL of them, at the root of the repo)
+- index.html   <- the entire website (one file)
+- logo.jpeg    <- the black-background logo (matches the black top bar)
+
+GITHUB PAGES
+1. Repo > main branch > delete old files if present
+2. "uploading an existing file" -> drag index.html and logo.jpeg
+3. Settings > Pages > Deploy from branch > main / (root) > Save
+4. Live at: https://YOUR-USERNAME.github.io/soultech/
+
+CHECKOUT FLOW (how clients pay you)
+1. Client clicks "Get Started" on a package
+2. Enters name / WhatsApp / email / business name
+3. Sees: Bank Gotyme, account 51066151314, unique reference ST-XXXX
+4. "Copy Details" copies it for the banking app
+5. "WhatsApp Proof" opens WhatsApp to +27 68 180 0497 with the
+   reference pre-typed - they attach the proof of payment
+
+If you ever need to change the account or prices, it is all in
+one file (index.html) - search for 51066151314 / R249.99.
