@@ -1,0 +1,65 @@
+SOUL TECH — SWITCHING ON ONLINE PAYMENT (PayFast)
+====================================================
+
+Right now the website already works for payments:
+  • Bank transfer: Gotyme — Soul Tech — 51066151314 (with ST-XXXX reference,
+    proof of payment via WhatsApp). This works today, no setup needed.
+
+To also let clients pay ONLINE (card or instant EFT) directly on the
+website, follow these steps.
+
+1. CREATE A PAYFAST MERCHANT ACCOUNT
+   • Go to https://www.payfast.co.za and click "Sign up".
+   • You'll need: Soul Tech's business details (or your ID as a
+     sole proprietor), a South African bank account that will
+     receive the payouts, and your email/phone.
+   • Verification usually takes 1–2 working days.
+   • PayFast charges per transaction (roughly 2–3% + a small
+     fixed fee). There is NO monthly fee. Payouts land in your
+     bank account (typically next-day or within 1–2 days).
+
+2. GET YOUR CREDENTIALS
+   • Once approved, open your PayFast dashboard → "Settings".
+   • Copy your **Vendor ID** and **Merchant Key**.
+   • You can also use the SANDBOX test credentials from the
+     dashboard to try the whole flow before going live.
+
+3. ADD THEM TO THE WEBSITE
+   • Open index.html in a text editor.
+   • Search for:  var PAYFAST_VENDOR_ID = "YOUR_VENDOR_ID";
+   • Replace it with:  var PAYFAST_VENDOR_ID = "10000100";   (your real value)
+   • Replace:  var PAYFAST_MERCHANT_KEY = "YOUR_MERCHANT_KEY";
+     with:      var PAYFAST_MERCHANT_KEY = "46f0cd694581a";   (your real value)
+   • While testing with sandbox credentials, leave:  var PAYFAST_LIVE = false;
+   • Only set  var PAYFAST_LIVE = true;  when you use production credentials.
+   • Save and upload index.html to the soultech repo. Done —
+     "Pay online" now sends clients to PayFast's secure page and
+     brings them back to your site with a confirmation.
+
+4. HOW THE FLOW WORKS
+   • Client picks a package → details → "Pay online"
+   • PayFast takes the payment securely (3-D Secure, instant EFT)
+   • Client is redirected back to the site showing "Payment received"
+   • The order appears in your admin dashboard (#admin) marked
+     **Completed** with the PayFast payment ID.
+
+5. VERIFYING PAYMENTS (IMPORTANT — read this)
+   • Because the website has no server yet, we recommend you
+     double-check each online payment in your PayFast dashboard
+     (it lists every transaction with amount + reference) before
+     activating the package. Match the reference (ST-XXXX) and
+     amount, then activate and confirm on WhatsApp.
+   • Bank transfer orders work the same way: check the account,
+     match the ST-XXXX reference, then confirm on WhatsApp.
+   • Later (optional, recommended): a small free Cloudflare
+     Worker can sign and verify PayFast payments automatically.
+     Ask for that when you're ready and it's no longer a prototype.
+
+6. LATER UPGRADE — DEBIT ORDERS (EasyPay)
+   • Since your packages are monthly (R199–R2,499), once you have
+     real PayFast credentials you can enable **EasyPay** — clients
+     authorise a debit order and are billed automatically each
+     month. No more chasing payments. This is a PayFast add-on
+     enabled in the dashboard after you've processed a few payments.
+
+QUESTIONS? WhatsApp +27 68 180 0497
