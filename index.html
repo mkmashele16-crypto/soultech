@@ -231,7 +231,7 @@
 
   /* ---------- checkout modal ---------- */
   .modal-bg { position: fixed; inset: 0; background: rgba(32,33,36,.55); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
-  .modal-bg.show { display: flex; }
+  .modal-bg.open, .modal-bg.show { display: flex; }
   .modal { background: #fff; border-radius: 20px; width: min(100%, 540px); max-height: 92vh; overflow-y: auto; padding: 2rem; position: relative; }
   .modal .close { position: absolute; top: .9rem; right: 1.1rem; background: none; border: none; font-size: 1.6rem; color: var(--gray-light); cursor: pointer; line-height: 1; }
   .modal .close:hover { color: var(--ink); }
@@ -245,6 +245,29 @@
   .pay-box.show { display: block; }
   .pay-box { background: var(--blue-surface); border: 1px solid #d2e3fc; border-radius: 14px; padding: 1.3rem; margin-top: 1.2rem; }
   .pay-box h4 { color: var(--ink); margin-bottom: .7rem; font-size: 1rem; }
+
+  /* ---------- payment step ---------- */
+  .pay-step { display: none; margin-top: 1.2rem; }
+  .pay-step.show { display: block; }
+  .order-summary { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 1.1rem; }
+  .os-row { display: flex; justify-content: space-between; font-size: .92rem; padding: .2rem 0; color: var(--gray); }
+  .os-row b { color: var(--ink); }
+  .os-row.total { border-top: 1px solid var(--border); margin-top: .5rem; padding-top: .6rem; font-size: 1.05rem; }
+  .os-row.total b { font-size: 1.25rem; letter-spacing: -.02em; }
+  .pm-title { font-weight: 600; font-size: .98rem; margin-bottom: .8rem; }
+  .pm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+  .pm-opt { border: 1.5px solid var(--border); border-radius: 14px; padding: 1.1rem; cursor: pointer; text-align: left; background: #fff; font-family: inherit; transition: border-color .15s, box-shadow .15s, transform .15s; position: relative; display: block; width: 100%; }
+  .pm-opt:hover { border-color: var(--blue); box-shadow: 0 6px 18px rgba(26,115,232,.12); transform: translateY(-2px); }
+  .pm-opt.selected { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,115,232,.15); }
+  .pm-ico { font-size: 1.5rem; }
+  .pm-opt h4 { font-size: .98rem; margin: .5rem 0 .2rem; }
+  .pm-opt p { font-size: .8rem; color: var(--gray); line-height: 1.45; }
+  .pm-tag { position: absolute; top: .8rem; right: .8rem; background: var(--blue); color: #fff; font-size: .62rem; font-weight: 700; padding: .2rem .5rem; border-radius: 999px; letter-spacing: .03em; }
+  .pm-note { font-size: .8rem; color: var(--gray); background: var(--surface-2); border: 1px dashed var(--border); border-radius: 10px; padding: .7rem .85rem; margin-top: .8rem; line-height: 1.5; }
+  .pm-note b { color: var(--ink); }
+  .pm-back { background: none; border: none; color: var(--gray); font-size: .82rem; cursor: pointer; padding: 0; margin-top: .9rem; font-family: inherit; }
+  .pm-back:hover { color: var(--blue); }
+  @media (max-width: 480px) { .pm-grid { grid-template-columns: 1fr; } }
   .pay-row { display: flex; justify-content: space-between; gap: 1rem; padding: .4rem 0; font-size: .93rem; border-bottom: 1px dashed #c6dcfb; }
   .pay-row:last-of-type { border-bottom: none; }
   .pay-row .acct { font-family: "Roboto Mono", monospace; font-weight: 700; letter-spacing: .06em; color: var(--blue-deep); }
@@ -961,7 +984,7 @@
     <div class="offer-claim">
       <div>
         <b>How to start</b>
-        <p>Pick a package, pay by bank transfer to our Gotyme account, then send proof of payment on WhatsApp. We activate your package the same day.</p>
+        <p>Pick a package, then pay online by card or instant EFT &mdash; or by bank transfer to our Gotyme account. We activate your package the same day.</p>
       </div>
       <a class="btn btn-blue" href="https://wa.me/27681800497?text=Hi%20Soul%20Tech%2C%20I%E2%80%99d%20like%20to%20start%20a%20package." target="_blank" rel="noopener">Start now</a>
     </div>
@@ -1146,7 +1169,7 @@
   <div class="steps">
     <div class="step"><div class="sn">1</div><h4>Choose your package</h4><p>Pick the plan that fits your business &mdash; or start with a free consult.</p></div>
     <div class="step"><div class="sn">2</div><h4>Tell us about you</h4><p>Share your business goals, area and audience.</p></div>
-    <div class="step"><div class="sn">3</div><h4>Make payment</h4><p>Bank transfer to our Gotyme account with your ST-XXXX reference.</p></div>
+    <div class="step"><div class="sn">3</div><h4>Make payment</h4><p>Pay online by card or EFT &mdash; or bank transfer (Gotyme) with your ST-XXXX reference.</p></div>
     <div class="step"><div class="sn">4</div><h4>Service begins</h4><p>We set up your accounts and start posting &mdash; same-day activation.</p></div>
     <div class="step"><div class="sn">5</div><h4>Analytics &amp; reports</h4><p>30+ posts a month on Premium. See what&rsquo;s working and keep growing.</p></div>
   </div>
@@ -1219,26 +1242,54 @@
   <div class="modal">
     <button class="close" onclick="closeCheckout()" aria-label="Close">&times;</button>
     <h3>Start Your <span id="mPlan">Growth Package</span></h3>
-    <p class="m-sub">Tell us who you are, and we&rsquo;ll give you our payment details. <b id="mPrice">R999/month</b></p>
+    <p class="m-sub">Tell us who you are, then choose how you&rsquo;d like to pay. <b id="mPrice">R999/month</b></p>
     <form id="checkoutForm" onsubmit="return finishCheckout(event)">
       <div class="field"><label for="fName">Full name *</label><input id="fName" required maxlength="100" autocomplete="name" placeholder="e.g. Thabo Nkosi"></div>
       <div class="field"><label for="fPhone">WhatsApp number *</label><input id="fPhone" type="tel" required maxlength="20" autocomplete="tel" inputmode="tel" oninput="this.setCustomValidity('')" placeholder="e.g. 068 123 4567"></div>
       <div class="field"><label for="fEmail">Email</label><input id="fEmail" type="email" maxlength="254" autocomplete="email" placeholder="you@business.com"></div>
       <div class="field"><label for="fBiz">Business name</label><input id="fBiz" maxlength="120" autocomplete="organization" placeholder="e.g. Sisonke Spaza"></div>
-      <button class="btn btn-blue" type="submit" style="width:100%;">Get Payment Details</button>
+      <button class="btn btn-blue" type="submit" style="width:100%;">Continue to Payment</button>
     </form>
+
+    <!-- STEP 2: order summary + choose payment method -->
+    <div class="pay-step" id="payStep">
+      <div class="order-summary">
+        <div class="os-row"><span>Package</span><b id="payPlan">Growth Package</b></div>
+        <div class="os-row"><span>Billing</span><b id="payBilling">Monthly &middot; no lock-in</b></div>
+        <div class="os-row total"><span>Total due</span><b id="payAmt">R999</b></div>
+        <div class="os-row"><span>Order reference</span><b id="payRef">ST-0000</b></div>
+      </div>
+      <p class="pm-title">How would you like to pay?</p>
+      <div class="pm-grid" id="pmGrid">
+        <button type="button" class="pm-opt" id="pmOnline" onclick="choosePayment('online')">
+          <span class="pm-tag">FASTEST</span>
+          <div class="pm-ico">&#128179;</div>
+          <h4>Pay online</h4>
+          <p>Debit or credit card, or instant EFT. Secure checkout powered by PayFast &mdash; takes about a minute.</p>
+        </button>
+        <button type="button" class="pm-opt" id="pmBank" onclick="choosePayment('bank')">
+          <div class="pm-ico">&#127974;</div>
+          <h4>Bank transfer</h4>
+          <p>Pay directly to our Gotyme account, then send proof of payment on WhatsApp.</p>
+        </button>
+      </div>
+      <p class="pm-note" id="pmOnlineNote" style="display:none;"></p>
+      <button class="pm-back" type="button" onclick="backToDetails()">&larr; Change my details</button>
+    </div>
+
+    <!-- STEP 3 (bank transfer): payment details -->
     <div class="pay-box" id="payBox">
-      <h4>Pay by bank transfer &mdash; reference <b id="payRef">ST-0000</b></h4>
+      <h4>Pay by bank transfer &mdash; reference <b id="payRef2">ST-0000</b></h4>
       <div class="pay-row"><span>Bank</span><b>Gotyme</b></div>
       <div class="pay-row"><span>Account holder</span><b>Soul Tech</b></div>
       <div class="pay-row"><span>Account number</span><span class="acct">51066151314</span></div>
-      <div class="pay-row"><span>Amount</span><b id="payAmt">R999</b></div>
-      <div class="pay-row"><span>Reference</span><b id="payRef2">ST-0000</b></div>
-      <p class="pay-note">Once you&rsquo;ve paid, send your proof of payment to <b>info@soultech.co.za</b> or WhatsApp <b>+27 68 180 0497</b> and we&rsquo;ll activate your package the same day. In this prototype, your order is saved on this device only. Keep your reference when contacting Soul Tech.</p>
+      <div class="pay-row"><span>Amount</span><b id="payAmt2">R999</b></div>
+      <p class="pay-note">Once you&rsquo;ve paid, send your proof of payment to <b>info@soultech.co.za</b> or WhatsApp <b>+27 68 180 0497</b> and we&rsquo;ll activate your package the same day. Keep your reference when contacting Soul Tech.</p>
       <div class="modal-actions">
         <button class="btn btn-ghost" type="button" onclick="copyDetails()">Copy Details</button>
         <a class="btn btn-blue" id="waProof" href="#" target="_blank" rel="noopener">WhatsApp Proof</a>
       </div>
+      <button class="pm-back" type="button" onclick="backToPayment()">&larr; Choose a different payment method</button>
     </div>
   </div>
 </div>
@@ -1331,6 +1382,23 @@ var CATALOG = {
   "seo":            { name: "SEO",             price: 1999, pricingType: "monthly"  }
 };
 
+/* ============ ONLINE PAYMENT (PayFast) ============
+   To switch on online payment:
+   1. Sign up at payfast.co.za (free) and complete the short
+      business verification.
+   2. Copy your Vendor ID and Merchant Key from the dashboard
+      into the two lines below (sandbox values work first).
+   3. Set PAYFAST_LIVE to true only when you are using your
+      production credentials.
+   Until that is done, "Pay online" shows a friendly note and
+   bank transfer remains the way to pay.                     */
+var PAYFAST_VENDOR_ID = "YOUR_VENDOR_ID";
+var PAYFAST_MERCHANT_KEY = "YOUR_MERCHANT_KEY";
+var PAYFAST_LIVE = false;
+function payFastReady() {
+  return PAYFAST_VENDOR_ID !== "YOUR_VENDOR_ID" && PAYFAST_MERCHANT_KEY !== "YOUR_MERCHANT_KEY";
+}
+
 var planId = "growth", orderRef = "";
 
 function openCheckout(id) {
@@ -1340,6 +1408,14 @@ function openCheckout(id) {
   document.getElementById("mPlan").textContent = p.name;
   document.getElementById("mPrice").textContent = "R" + (p.price >= 1000 ? p.price.toLocaleString("en-ZA") : p.price) + (p.pricingType === "monthly" ? "/month" : " (one-off)");
   document.getElementById("payBox").classList.remove("show");
+  document.getElementById("payStep").classList.remove("show");
+  var note = document.getElementById("pmOnlineNote");
+  note.style.display = "none";
+  note.innerHTML = "";
+  var grid = document.getElementById("pmGrid");
+  grid.style.display = "";
+  document.getElementById("pmOnline").style.display = "";
+  document.getElementById("pmBank").style.display = "";
   var form = document.getElementById("checkoutForm");
   form.style.display = "";
   form.reset();
@@ -1370,6 +1446,17 @@ function finishCheckout(e) {
   document.getElementById("payRef").textContent = orderRef;
   document.getElementById("payRef2").textContent = orderRef;
   document.getElementById("payAmt").textContent = amt;
+  document.getElementById("payAmt2").textContent = amt;
+  document.getElementById("payPlan").textContent = p.name;
+  document.getElementById("payBilling").textContent = p.pricingType === "monthly" ? "Monthly \u00B7 no lock-in" : "One-off";
+  try {
+    sessionStorage.setItem("st_last_order", JSON.stringify({
+      ref: orderRef, planId: planId, plan: p.name,
+      amount: p.price,
+      amountLabel: amt + (p.pricingType === "monthly" ? "/month" : ""),
+      name: name
+    }));
+  } catch (err) { /* private mode etc. */ }
 
   var msg = "Hi Soul Tech, " + name + (biz ? " (" + biz + ")" : "") +
             ". I have paid for " + p.name + " (" + amt + (p.pricingType === "monthly" ? "/month" : "") + "). " +
@@ -1430,9 +1517,120 @@ function finishCheckout(e) {
   } catch (err) { /* storage unavailable - checkout still shows payment details */ }
 
   document.getElementById("checkoutForm").style.display = "none";
-  document.getElementById("payBox").classList.add("show");
+  document.getElementById("payBox").classList.remove("show");
+  document.getElementById("payStep").classList.add("show");
   return false;
 }
+
+/* ---------- payment method steps ---------- */
+function backToDetails() {
+  document.getElementById("payStep").classList.remove("show");
+  document.getElementById("payBox").classList.remove("show");
+  document.getElementById("checkoutForm").style.display = "";
+}
+function backToPayment() {
+  document.getElementById("payBox").classList.remove("show");
+  document.getElementById("payStep").classList.add("show");
+}
+function choosePayment(method) {
+  var note = document.getElementById("pmOnlineNote");
+  note.style.display = "none";
+  if (method === "bank") {
+    document.getElementById("pmBank").classList.add("selected");
+    document.getElementById("pmOnline").classList.remove("selected");
+    document.getElementById("payStep").classList.remove("show");
+    document.getElementById("payBox").classList.add("show");
+    return;
+  }
+  /* online */
+  if (!payFastReady()) {
+    note.innerHTML = "<b>Online payment is being switched on.</b> In the meantime, please choose <b>bank transfer</b> (Gotyme 51066151314) or WhatsApp us on <b>+27 68 180 0497</b> and we&rsquo;ll arrange payment for you right away.";
+    note.style.display = "block";
+    return;
+  }
+  var p = CATALOG[planId];
+  var fullName = document.getElementById("fName").value.trim();
+  var parts = fullName.split(/\s+/);
+  var first = parts[0] || "";
+  var surname = parts.slice(1).join(" ");
+  var email = document.getElementById("fEmail").value.trim();
+  var phone = document.getElementById("fPhone").value.trim();
+  var base = window.location.origin + window.location.pathname;
+  var form = document.createElement("form");
+  form.method = "POST";
+  form.action = PAYFAST_LIVE ? "https://www.payfast.co.za/eng/process" : "https://sandbox.payfast.co.za/eng/process";
+  function field(n, v) { var i = document.createElement("input"); i.type = "hidden"; i.name = n; i.value = v; form.appendChild(i); }
+  field("merchant_id", PAYFAST_VENDOR_ID);
+  field("merchant_key", PAYFAST_MERCHANT_KEY);
+  field("return_url", base + "?pf=1");
+  field("cancel_url", base + "?pf=0");
+  field("m_payment_id", orderRef);
+  field("amount", p.price.toFixed(2));
+  field("item_name", "Soul Tech - " + p.name + (p.pricingType === "monthly" ? " (monthly)" : " (one-off)"));
+  field("first_name", first);
+  if (surname) field("surname", surname);
+  if (email) field("email_address", email);
+  if (phone) field("mobile_number", phone);
+  document.body.appendChild(form);
+  form.submit();
+}
+
+/* ---------- handle redirect back from PayFast ---------- */
+(function handlePayFastReturn() {
+  var q = new URLSearchParams(window.location.search);
+  var pf = q.get("pf");
+  var status = (q.get("payment_status") || "").toUpperCase();
+  if (!pf && !status) return;
+  window.history.replaceState(null, "", window.location.pathname + window.location.hash);
+  var last = null;
+  try { last = JSON.parse(sessionStorage.getItem("st_last_order")); } catch (e) {}
+  if (!last) return;
+  var ref = q.get("m_payment_id") || last.ref;
+  var esc = function (s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); };
+  /* mark the order paid in the local store */
+  try {
+    var orders = JSON.parse(localStorage.getItem("bsm_orders")) || [];
+    orders.forEach(function (o) {
+      if (o.orderNumber === ref && status === "APPROVED") {
+        o.status = "Completed";
+        o.paymentMethod = "PayFast";
+        o.payfastId = q.get("payment_id") || "";
+      }
+    });
+    localStorage.setItem("bsm_orders", JSON.stringify(orders));
+    if (typeof renderBoostClients === "function") renderBoostClients();
+  } catch (e) {}
+  /* reopen the modal on the payment step with the result */
+  openCheckout(last.planId);
+  orderRef = last.ref;
+  document.getElementById("checkoutForm").style.display = "none";
+  var step = document.getElementById("payStep");
+  step.classList.add("show");
+  document.getElementById("payPlan").textContent = last.plan;
+  document.getElementById("payAmt").textContent = last.amountLabel.replace("/month", "");
+  document.getElementById("payRef").textContent = last.ref;
+  document.getElementById("payBilling").textContent = "Monthly \u00B7 no lock-in";
+  var note = document.getElementById("pmOnlineNote");
+  var grid = document.getElementById("pmGrid");
+  if (status === "APPROVED") {
+    grid.style.display = "none";
+    note.style.display = "block";
+    note.innerHTML = "&#127881; <b>Payment received &mdash; thank you!</b> Your " + esc(last.plan) + " (" + esc(last.amountLabel) + ") is confirmed, reference <b>" + esc(ref) + "</b>. We&rsquo;ll activate your package within 24 hours and send a confirmation on WhatsApp.";
+    step.querySelector(".pm-back").style.display = "none";
+  } else if (status === "PENDING") {
+    note.style.display = "block";
+    note.innerHTML = "&#9203; <b>Payment in progress.</b> We&rsquo;ve received it and will confirm and activate your package as soon as it clears. Reference: <b>" + esc(ref) + "</b>.";
+  } else if (status === "DECLINED") {
+    note.style.display = "block";
+    note.innerHTML = "&#9888;&#65039; <b>Payment was declined.</b> No money was taken. Please try again with another card, or choose bank transfer.";
+  } else if (pf === "0") {
+    note.style.display = "block";
+    note.innerHTML = "&#8617; <b>You cancelled the online payment.</b> No money was taken. You can try again, or choose bank transfer.";
+  } else {
+    note.style.display = "block";
+    note.innerHTML = "&#9203; <b>Payment in progress</b> &mdash; we&rsquo;ll confirm as soon as it clears. Reference: <b>" + esc(ref) + "</b>.";
+  }
+})();
 function copyDetails() {
   var p = CATALOG[planId];
   var amt = "R" + (p.price >= 1000 ? p.price.toLocaleString("en-ZA") : p.price) + (p.pricingType === "monthly" ? "/month" : "");
@@ -1693,15 +1891,23 @@ var stchatKB = [
     id: "start",
     kws: ["start", "sign up", "signup", "join", "buy", "order", "get started", "how do i", "begin", "register", "subscribe", "book"],
     reply: [
-      "Getting started is easy! \uD83D\uDE80\n\n1. Pick a package (or book a free 30-min consult first)\n2. Pay by bank transfer: <b>Gotyme \u2014 51066151314</b> (Soul Tech), using your ST-XXXX reference\n3. Send proof of payment on WhatsApp\n4. We activate your package the same day\n\nNo contracts, no lock-in \u2014 month to month."
+      "Getting started is easy! \uD83D\uDE80\n\n1. Pick a package (or book a free 30-min consult first)\n2. Pay online by card or instant EFT \u2014 or by bank transfer to <b>Gotyme \u2014 51066151314</b> (Soul Tech) with your ST-XXXX reference\n3. If you paid by bank transfer, just send the proof on WhatsApp\n4. We activate your package the same day\n\nNo contracts, no lock-in \u2014 month to month."
     ],
     chips: [["View pricing page", "scroll", "pricing"], ["WhatsApp us", "wa"], ["How do I pay?", "ask"]]
+  },
+  {
+    id: "payonline",
+    kws: ["pay online", "online payment", "credit card", "debit card", "card payment", "payfast", "pay by card", "card"],
+    reply: [
+      "You can pay online at checkout \u2014 debit or credit card, or instant EFT, through our secure PayFast checkout. It takes about a minute. \uD83D\uDCB3\n\nPrefer banks? No problem: transfer to our Gotyme account <b>51066151314</b> with your ST-XXXX reference and send proof on WhatsApp. Either way, we activate your package the same day."
+    ],
+    chips: [["View pricing page", "scroll", "pricing"], ["WhatsApp us", "wa"]]
   },
   {
     id: "payment",
     kws: ["how do i pay", "how to pay", "pay for", "payment details", "pay", "payment", "bank", "gotyme", "transfer", "account number", "proof of payment", "eft"],
     reply: [
-      "Payment is a simple bank transfer \uD83D\uDCB3\n\n\u2022 Bank: <b>Gotyme</b>\n\u2022 Account holder: <b>Soul Tech</b>\n\u2022 Account number: <b>51066151314</b>\n\u2022 Reference: your ST-XXXX order number\n\nAfter paying, send proof on WhatsApp (+27 68 180 0497) or email (info@soultech.co.za) and we\u2019ll activate your package the same day."
+      "There are two easy ways to pay: \uD83D\uDCB0\n\n<b>1. Online (fastest)</b> \u2014 debit/credit card or instant EFT through our secure PayFast checkout, right on the website.\n\n<b>2. Bank transfer</b> \u2014 Gotyme, account holder <b>Soul Tech</b>, account number <b>51066151314</b>, reference: your ST-XXXX order number. Then send proof on WhatsApp (+27 68 180 0497) or email (info@soultech.co.za).\n\nWe activate your package the same day it\u2019s received."
     ],
     chips: [["WhatsApp us", "wa"], ["How do I start?", "ask"], ["Email us", "email"]]
   },
